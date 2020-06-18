@@ -52,8 +52,9 @@
 
 namespace moveit_ompl
 {
-void loadOMPLParameters(ros::NodeHandle nh, const std::string &name, ompl::tools::bolt::BoltPtr bolt)
+void loadOMPLParameters(ompl::tools::bolt::BoltPtr bolt)
 {
+  ros::NodeHandle nh;
   using namespace rosparam_shortcuts;
   std::size_t error = 0;
   ompl::tools::bolt::SparseGraphPtr sparseGraph = bolt->getSparseGraph();
@@ -62,7 +63,7 @@ void loadOMPLParameters(ros::NodeHandle nh, const std::string &name, ompl::tools
   ompl::tools::bolt::BoltPlannerPtr boltPlanner = bolt->getBoltPlanner();
   ompl::tools::bolt::VertexDiscretizerPtr vertexDiscret = sparseCriteria->getVertexDiscretizer();
   // ompl::tools::bolt::DenseCachePtr denseCache = sparseGraph->getDenseCache();
-
+	std::string name = "planning_context_manager";
   // Bolt
   {
     ros::NodeHandle rpnh(nh, "bolt");

@@ -57,10 +57,11 @@
 
 namespace moveit_ompl
 {
-void loadOMPLParameters(ros::NodeHandle nh, const std::string &name, ompl::tools::bolt::BoltPtr bolt)
+void loadOMPLParameters(ompl::tools::bolt::BoltPtr bolt)
 {
   using namespace rosparam_shortcuts;
   std::size_t error = 0;
+  ros::NodeHandle nh;
 
   ompl::tools::bolt::SparseGraphPtr sparseGraph = bolt->getSparseGraph();
   BOLT_ASSERT(sparseGraph, "Sparse graph is not initialized");
@@ -80,7 +81,7 @@ void loadOMPLParameters(ros::NodeHandle nh, const std::string &name, ompl::tools
   BOLT_ASSERT(vertexDiscret, "vertexDiscret is not initialized");
   ompl::tools::bolt::CandidateQueuePtr candidateQueue = sparseGenerator->getCandidateQueue();
   BOLT_ASSERT(candidateQueue, "candidateQueue is not initialized");
-
+	std::string name = "planning_context_manager";
   // Bolt
   {
     ros::NodeHandle rpnh(nh, "bolt");

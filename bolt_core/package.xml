@@ -17,6 +17,7 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <depend>ompl</depend>
+  <depend>geometry_msgs</depend>
   <depend>valgrind</depend>
 
   <export>

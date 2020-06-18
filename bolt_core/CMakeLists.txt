@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.3)
+cmake_minimum_required(VERSION 3.0.2)
 project(bolt_core)
 
 # C++ 11
@@ -11,18 +11,18 @@ add_compile_options(-std=c++11)
 #   -Wno-unused-parameter -Wno-unused-function)
 
 find_package(catkin REQUIRED COMPONENTS
+        geometry_msgs
 )
 
-find_package(OMPL REQUIRED)
+#find_package(ompl REQUIRED)
 find_package(Boost REQUIRED)
 
 catkin_package(
   CATKIN_DEPENDS
     ompl
-  INCLUDE_DIRS
-    src
-  LIBRARIES
-    ${PROJECT_NAME}
+  LIBRARIES ${PROJECT_NAME}
+  INCLUDE_DIRS include
+
 )
 
 # If enabled, show debug message output
@@ -41,25 +41,25 @@ include_directories(SYSTEM
 )
 
 include_directories(
-  src
+  include
   ${catkin_INCLUDE_DIRS}
   ${OMPL_INCLUDE_DIRS}
 )
 
 # Library
 add_library(${PROJECT_NAME}
-  src/bolt_core/src/Bolt.cpp
-  src/bolt_core/src/BoltPlanner.cpp
-  src/bolt_core/src/SparseGraph.cpp
-  src/bolt_core/src/SparseGenerator.cpp
-  src/bolt_core/src/SparseMirror.cpp
-  src/bolt_core/src/SparseCriteria.cpp
-  src/bolt_core/src/SparseStorage.cpp
-  src/bolt_core/src/TaskGraph.cpp
-  src/bolt_core/src/VertexDiscretizer.cpp
-  src/bolt_core/src/CandidateQueue.cpp
-  src/bolt_core/src/SparseSmoother.cpp
-  src/bolt_core/src/SPARS2.cpp
+  src/Bolt.cpp
+  src/BoltPlanner.cpp
+  src/SparseGraph.cpp
+  src/SparseGenerator.cpp
+  src/SparseMirror.cpp
+  src/SparseCriteria.cpp
+  src/SparseStorage.cpp
+  src/TaskGraph.cpp
+  src/VertexDiscretizer.cpp
+  src/CandidateQueue.cpp
+  src/SparseSmoother.cpp
+  src/SPARS2.cpp
 )
 
 # Specify libraries to link a library or executable target against
@@ -81,6 +81,6 @@ install(TARGETS ${PROJECT_NAME}
 )
 
 # Mark cpp header files for installation
-install(DIRECTORY src/bolt_core/
+install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )

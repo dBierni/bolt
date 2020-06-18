@@ -33,6 +33,7 @@ catkin_package(
   CATKIN_DEPENDS
     moveit_core
     moveit_visual_tools
+    rosparam_shortcuts
 )
 
 ###########
