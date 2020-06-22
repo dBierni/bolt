@@ -93,6 +93,8 @@ void Bolt::initialize(std::size_t indent)
   BOLT_INFO(indent, verbose_, "Loading SparseMirror");
   sparseMirror_.reset(new SparseMirror(sparseGraph_));
 
+  sparseGraphsVec_.reset(new std::vector<std::pair<Eigen::Isometry3d , SparseGraphPtr>>());
+
   // ----------------------------------------------------------------------------
   // CompoundState settings for task planning
 
@@ -385,6 +387,13 @@ bool Bolt::setFilePath(const std::string &filePath)
   return true;
 }
 
+bool Bolt::setFilePath(const std::string &filePath, SparseGraphPtr sparseGraph)
+{
+    sparseGraph->setFilePath(filePath + ".ompl");
+    sparseGraph->getSparseStorage()->setLoggingPath(filePath + ".logging");
+    //benchmarkFilePath_ = filePath + ".benchmark";
+    return true;
+}
 bool Bolt::save()
 {
   // setup(); // ensure the db has been loaded to the Experience DB
@@ -425,7 +434,43 @@ bool Bolt::load(std::size_t indent)
    taskGraph_->generateTaskSpace(1);
   return true;
 }
+bool Bolt::load(std::size_t indent, bool load)
+{
+  // Load from file
+  assert(graphsInfo_.size() == 0);
 
+  for (auto it = graphsInfo_.begin(); it != graphsInfo_.end(); it++)
+  {
+    SparseGraphPtr sg_ = std::make_shared<SparseGraph>(si_, visual_);
+    sparseGraphsVec_->emplace_back(it->pose_,std::move(sg_));
+    if (!sparseGraphsVec_->end()->second->isEmpty())
+    {
+      BOLT_WARN(indent, 1, "Database already loaded, vertices: " << sparseGraph_->getNumVertices()
+                                                                 << ", edges: " << sparseGraph_->getNumEdges()
+                                                                 << ", queryV: " << sparseGraph_->getNumQueryVertices());
+      continue;
+    }
+
+    sparseGraphsVec_->end()->second->setFilePath(it->name_);
+    if (!sparseGraphsVec_->end()->second->load())  // load from file
+    {
+      graphsInfo_.erase( it--);
+      sparseGraphsVec_->erase(sparseGraphsVec_->end());
+    }
+   // taskGraph_->generateTaskSpace(1);
+  }
+
+  if ((sparseGraphsVec_->size() == graphsInfo_.size()) && sparseGraphsVec_->size() > 0)
+  {
+    BOLT_INFO(indent, true, "Number of loaded graphs to database: " << sparseGraphsVec_->size());
+    return true;
+  }
+  else
+  {
+    BOLT_ERROR(indent, "There is no graphs in database!")
+    return false;
+  }
+}
 void Bolt::print(std::ostream &out) const
 {
   if (si_)
@@ -462,6 +507,14 @@ void Bolt::printLogs(std::ostream &out) const
   out << "  Average planning time:         " << stats_.getAveragePlanningTime() << " seconds" << std::endl;
   out << "  Average insertion time:        " << stats_.getAverageInsertionTime() << " seconds" << std::endl;
   out << std::endl;
+}
+void Bolt::initializeGraph(Eigen::Isometry3d pose,std::string name)
+{
+//  SparseGraphPtr sg_ = std::make_shared<SparseGraph>(si_, visual_);
+//  sparseGraphsVec_->emplace_back(GraphInfo(pose, name),nullptr);
+
+  graphsInfo_.push_back(GraphInfo(pose, name));
+
 }
 
 }  // namespace bolt

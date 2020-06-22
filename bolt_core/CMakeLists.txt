@@ -16,6 +16,8 @@ find_package(catkin REQUIRED COMPONENTS
 
 #find_package(ompl REQUIRED)
 find_package(Boost REQUIRED)
+find_package(Eigen3 REQUIRED)
+include_directories(${Eigen3_INCLUDE_DIRS})
 
 catkin_package(
   CATKIN_DEPENDS
@@ -60,7 +62,7 @@ add_library(${PROJECT_NAME}
   src/CandidateQueue.cpp
   src/SparseSmoother.cpp
   src/SPARS2.cpp
-)
+ )
 
 # Specify libraries to link a library or executable target against
 target_link_libraries(${PROJECT_NAME}

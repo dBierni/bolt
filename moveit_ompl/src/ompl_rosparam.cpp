@@ -54,6 +54,7 @@ namespace moveit_ompl
 {
 void loadOMPLParameters(ompl::tools::bolt::BoltPtr bolt)
 {
+
   ros::NodeHandle nh;
   using namespace rosparam_shortcuts;
   std::size_t error = 0;
@@ -70,6 +71,7 @@ void loadOMPLParameters(ompl::tools::bolt::BoltPtr bolt)
     error += !get(name, rpnh, "visualize/raw_trajectory", bolt->visualizeRawTrajectory_);
     error += !get(name, rpnh, "visualize/smooth_trajectory", bolt->visualizeSmoothTrajectory_);
     error += !get(name, rpnh, "visualize/robot_trajectory", bolt->visualizeRobotTrajectory_);
+
   }
 
   // Vertex Discretizer

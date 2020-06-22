@@ -81,7 +81,7 @@
         std::stringstream o; o << stream;                               \
         indent = indent + 2;                                            \
         if (flag)                                                       \
-          std::cout << ANSI_COLOR_CYAN << std::string(indent, ' ') << name_ << ":" << o.str() << ANSI_COLOR_RESET << std::endl; \
+          std::cout << ANSI_COLOR_CYAN << std::string(indent, ' ') << o.str() << ":" << o.str() << ANSI_COLOR_RESET << std::endl; \
         indent = indent + 2;                                            \
       } while (0)
 #else

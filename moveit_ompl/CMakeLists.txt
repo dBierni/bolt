@@ -20,7 +20,9 @@ find_package(catkin REQUIRED COMPONENTS
   tf
   eigen_conversions
   sensor_msgs
-)
+  bolt_core
+
+        )
 find_package(OMPL REQUIRED)
 
 catkin_package(
@@ -34,6 +36,7 @@ catkin_package(
     moveit_core
     moveit_visual_tools
     rosparam_shortcuts
+    bolt_core
 )
 
 ###########
@@ -54,7 +57,7 @@ link_directories(${Boost_LIBRARY_DIRS})
 add_library(${PROJECT_NAME}
   src/model_based_state_space.cpp
   src/detail/threadsafe_state_storage.cpp
-)
+  src/bolt_multiple_graphs_context.cpp)
 target_link_libraries(${PROJECT_NAME} ${OMPL_LIBRARIES} ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 

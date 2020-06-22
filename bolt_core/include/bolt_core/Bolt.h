@@ -58,7 +58,8 @@
 #include <ompl/util/Console.h>
 #include <ompl/util/Exception.h>
 
-#include <geometry_msgs/Point.h>
+//#include
+#include <eigen3/Eigen/Geometry>
 
 namespace ompl
 {
@@ -135,6 +136,15 @@ struct ExperienceStats
   double totalInsertionTime_;    // of all input requests, used for averaging
 };
 
+
+struct GraphInfo{
+    std::string name_;
+    Eigen::Isometry3d pose_;
+
+    GraphInfo(Eigen::Isometry3d pose, std::string name): pose_(pose), name_(name)
+    {}
+};
+
 /** \brief Built off of SimpleSetup but provides support for planning from experience */
 class Bolt : public geometric::SimpleSetup
 {
@@ -149,11 +159,7 @@ public:
   explicit Bolt(const base::StateSpacePtr &space);
 
 private:
-    struct mapRootPose{
-        uint8_t x{0};
-        uint8_t y{0};
-        uint8_t z{0};
-    };
+
   /** \brief Shared constructor functions */
   void initialize(std::size_t indent = 0);
 
@@ -167,7 +173,10 @@ public:
   /** \brief Load database from file  */
   bool load(std::size_t indent);
 
-  /** \brief Get the current planner */
+  bool load(std::size_t indent, bool load);
+
+
+    /** \brief Get the current planner */
   base::PlannerPtr &getPlanner()
   {
     return planner_;
@@ -214,6 +223,8 @@ public:
    */
   bool setFilePath(const std::string &filePath);
 
+  bool setFilePath(const std::string &filePath, SparseGraphPtr sparseGraph);
+
   /** \brief Save the experience database to file */
   bool save();
 
@@ -237,6 +248,8 @@ public:
 
   /** \brief Get a vector of all the planning data in the database */
   void getAllPlannerDatas(std::vector<base::PlannerDataPtr> &plannerDatas) const {};
+
+    void initializeGraph(Eigen::Isometry3d pose,std::string name);
 
   /** \brief Get the total number of paths stored in the database */
   std::size_t getExperiencesCount() const
@@ -277,6 +290,11 @@ public:
     return visual_;
   }
 
+  std::vector<GraphInfo> getGraphsInfo()
+  {
+    return graphsInfo_;
+  }
+
   /** \brief Allow accumlated experiences to be processed */
   // bool doPostProcessing();
 
@@ -295,7 +313,8 @@ protected:
   SparseGraphPtr sparseGraph_;
 
   /** \brief The graph that contains a sparse roadmap of the space and the root position for which sparse roadmap was generated */
-  std::vector<std::pair<mapRootPose, SparseGraphPtr>> sparseGraphsVec_;
+  std::unique_ptr<std::vector<std::pair<Eigen::Isometry3d, SparseGraphPtr>>> sparseGraphsVec_;
+  std::vector<GraphInfo> graphsInfo_;
 
   /** \brief Various tests to determine if a vertex/edge should be added to the graph, based on SPARS */
   SparseCriteriaPtr sparseCriteria_;
@@ -324,14 +343,18 @@ protected:
   /** \brief States data for display to console  */
   ExperienceStats stats_;
 
+
+
 public:
 
-  const std::string name_ = "Bolt";
 
   /** \brief Verbose settings */
   bool verbose_ = true;
 
-  /** \brief Visualize original solution from graph before smoothing */
+  int graphsQuantity_{0};
+
+
+    /** \brief Visualize original solution from graph before smoothing */
   bool visualizeRawTrajectory_ = false;
   /** \brief Visualize solution from graph after smoothing */
   bool visualizeSmoothTrajectory_ = true;

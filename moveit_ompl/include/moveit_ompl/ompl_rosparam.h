@@ -57,6 +57,16 @@
 
 namespace moveit_ompl
 {
+Eigen::Isometry3d convertVectorToPose(const std::vector<double> pose)
+{
+  Eigen::Isometry3d shared_pose_eigen_;
+  shared_pose_eigen_ = Eigen::Isometry3d::Identity();
+  shared_pose_eigen_.translation().x() = pose[0];
+  shared_pose_eigen_.translation().y() = pose[1];
+  shared_pose_eigen_.translation().z() = pose[2];
+  return shared_pose_eigen_;
+}
+
 void loadOMPLParameters(ompl::tools::bolt::BoltPtr bolt)
 {
   using namespace rosparam_shortcuts;
@@ -82,14 +92,30 @@ void loadOMPLParameters(ompl::tools::bolt::BoltPtr bolt)
   ompl::tools::bolt::CandidateQueuePtr candidateQueue = sparseGenerator->getCandidateQueue();
   BOLT_ASSERT(candidateQueue, "candidateQueue is not initialized");
 	std::string name = "planning_context_manager";
+
   // Bolt
   {
+    std::vector<double> poses(3);
+    std::string graph_file_name;
     ros::NodeHandle rpnh(nh, "bolt");
     error += !get(name, rpnh, "visualize/raw_trajectory", bolt->visualizeRawTrajectory_);
     error += !get(name, rpnh, "visualize/smooth_trajectory", bolt->visualizeSmoothTrajectory_);
     error += !get(name, rpnh, "visualize/robot_trajectory", bolt->visualizeRobotTrajectory_);
-  }
 
+    error += !get(name, rpnh, "graphs_switch/graphs_quantity", bolt->graphsQuantity_);
+
+    for(std::size_t i = 0; i < bolt->graphsQuantity_; i++ )
+    {
+    error += !get(name, rpnh,("graph_" + std::to_string(i) + "/nam"
+                                                             "e"), graph_file_name);
+    error += !get(name, rpnh, "graph_" + std::to_string(i) + "/pose", poses);
+    std::cout <<std::endl << " Name: " << graph_file_name << std::endl;
+    bolt->initializeGraph(convertVectorToPose(poses), graph_file_name);
+    poses.clear();
+    shutdownIfError(name, error);
+    }
+
+  }
   // Vertex Discretizer
   {
     ros::NodeHandle rpnh(nh, "vertex_discretizer");
