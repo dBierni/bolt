@@ -151,7 +151,16 @@ public:
     return nearestNeighborMutex_;
   }
 
-  /** \brief Reset the whole class */
+  bool findGraphNeighbors(SparseVertex  vertex,  std::vector<SparseVertex> &graphNeighbors,
+                                            double dist, std::size_t indent);
+
+  std::vector<SparseEdge> getNeighborsEdges(ompl::base::State *state, double dist,
+                                                                 std::vector<SparseEdge> &edges, size_t indent = 1);
+
+  SparseVertex getIntermediateVertex(SparseVertex v1, SparseVertex v2, double dist, size_t indent);
+
+
+    /** \brief Reset the whole class */
   void clear();
 
   /** \brief Free all the memory allocated by the database */

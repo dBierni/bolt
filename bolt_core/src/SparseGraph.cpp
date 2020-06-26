@@ -1561,3 +1561,72 @@ void otb::SparseAstarVisitor::examine_vertex(SparseVertex v, const SparseAdjList
   if (v == goal_)
     throw FoundGoalException();
 }
+
+bool otb::SparseGraph::findGraphNeighbors(SparseVertex  vertex,  std::vector<SparseVertex> &graphNeighbors,
+       double dist, std::size_t indent)
+{
+
+  BOLT_FUNC(indent, false, "SparseGraph::findGraphNeighbors()");
+  nn_->nearestR(vertex, dist, graphNeighbors);
+
+}
+
+std::vector<otb::SparseEdge> otb::SparseGraph::getNeighborsEdges(ompl::base::State *state, double dist,
+        std::vector<SparseEdge> &edges, size_t indent )
+{
+
+  SparseVertex v = addVertex(state,VertexType::UNKNOWN ,1);
+  SparseEdgeInIt in, in_end;
+  SparseEdgeOutIt out, out_end;
+  std::set<SparseEdge> unique_edges;
+  std::vector<SparseVertex> graphNeighbors;
+
+  if(findGraphNeighbors(v, graphNeighbors,dist,indent))
+  {
+    for (boost::tie(out, out_end) = boost::out_edges(v, g_); out != out_end; ++out)
+    {
+      auto source = boost::source ( *out, g_ );
+      auto target = boost::target ( *out, g_ );
+      if ( si_->distance(g_[target].state_, state) > dist)
+      {
+        SparseVertex v_intermediate = getIntermediateVertex(source, target, dist , indent);
+        unique_edges.insert(addEdge(v, v_intermediate,EdgeType::eINTERMEDIATE,indent));
+      }else
+        unique_edges.insert(*out);
+    }
+    for (boost::tie(in, in_end) = boost::in_edges(v, g_); in != in_end; ++in)
+    {
+      auto source = boost::source ( *out, g_ );
+      auto target = boost::target ( *out, g_ );
+      if ( si_->distance(g_[target].state_, state) > dist)
+      {
+        SparseVertex v_intermediate = getIntermediateVertex(target, source, dist , indent);
+        unique_edges.insert(addEdge(v, v_intermediate,EdgeType::eINTERMEDIATE,indent));
+      }else
+        unique_edges.insert(*out);
+    }
+    return std::vector<SparseEdge>(unique_edges.begin(), unique_edges.end());
+  }
+  return {};
+}
+
+otb::SparseVertex otb::SparseGraph::getIntermediateVertex(otb::SparseVertex v1, otb::SparseVertex v2, double dist,
+        size_t indent)
+{
+  const unsigned int count = si_->getStateSpace()->validSegmentCount(g_[v1].state_, g_[v2].state_);
+  ompl::base::State *intermediate_state = nullptr;
+  std::vector<ompl::base::State *> states;
+
+  if (si_->getMotionStates(g_[v1].state_, g_[v2].state_, states, count, true, true))
+    si_->freeState(states[0]);
+
+  for (std::size_t i = 1; i < states.size(); ++i)
+  {
+    if(!(si_->distance(g_[v1].state_, states[i]) < dist))
+    {
+      intermediate_state = states[i];
+    }else
+      break;
+  }
+  return  addVertex(intermediate_state, VertexType::INTERMEDIATE, indent);
+}

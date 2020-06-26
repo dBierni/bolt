@@ -21,7 +21,6 @@ find_package(catkin REQUIRED COMPONENTS
   eigen_conversions
   sensor_msgs
   bolt_core
-
         )
 find_package(OMPL REQUIRED)
 
@@ -55,9 +54,9 @@ link_directories(${catkin_LIBRARY_DIRS})
 link_directories(${Boost_LIBRARY_DIRS})
 
 add_library(${PROJECT_NAME}
-  src/model_based_state_space.cpp
+#  src/model_based_state_space.cpp
   src/detail/threadsafe_state_storage.cpp
-  src/bolt_multiple_graphs_context.cpp)
+)
 target_link_libraries(${PROJECT_NAME} ${OMPL_LIBRARIES} ${catkin_LIBRARIES} ${Boost_LIBRARIES})
 
 

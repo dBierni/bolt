@@ -112,7 +112,7 @@ void loadOMPLParameters(ompl::tools::bolt::BoltPtr bolt)
     std::cout <<std::endl << " Name: " << graph_file_name << std::endl;
     bolt->initializeGraph(convertVectorToPose(poses), graph_file_name);
     poses.clear();
-    shutdownIfError(name, error);
+      shutdownIfError(name, error);
     }
 
   }
