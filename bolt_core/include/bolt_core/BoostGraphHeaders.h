@@ -91,7 +91,9 @@ enum VertexType
   INTERFACE,
   QUALITY,
   CARTESIAN,
-  DISCRETIZED
+  DISCRETIZED,
+  INTERMEDIATE,
+  UNKNOWN
 };
 enum EdgeType
 {
@@ -100,7 +102,8 @@ enum EdgeType
   eQUALITY,
   eCARTESIAN,
   eDISCRETIZED,
-  eUNKNOWN
+  eUNKNOWN,
+  eINTERMEDIATE
 };
 
 /** \brief The type used internally for representing vertex IDs */
@@ -175,6 +178,10 @@ typedef boost::graph_traits<SparseAdjList>::vertex_descriptor SparseVertex;
 /** \brief Edge in Graph */
 typedef boost::graph_traits<SparseAdjList>::edge_descriptor SparseEdge;
 
+typedef boost::graph_traits<SparseAdjList>::in_edge_iterator SparseEdgeInIt;
+
+typedef boost::graph_traits<SparseAdjList>::out_edge_iterator SparseEdgeOutIt;
+
 ////////////////////////////////////////////////////////////////////////////////////////
 // Typedefs for property maps
 
@@ -224,6 +231,8 @@ typedef boost::graph_traits<TaskAdjList>::vertex_descriptor TaskVertex;
 
 /** \brief Edge in Graph */
 typedef boost::graph_traits<TaskAdjList>::edge_descriptor TaskEdge;
+
+
 
 /** \brief Internal representation of a dense path */
 // typedef std::deque<base::State*> DensePath;
