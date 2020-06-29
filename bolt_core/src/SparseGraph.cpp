@@ -1565,14 +1565,11 @@ void otb::SparseAstarVisitor::examine_vertex(SparseVertex v, const SparseAdjList
 bool otb::SparseGraph::findGraphNeighbors(SparseVertex  vertex,  std::vector<SparseVertex> &graphNeighbors,
        double dist, std::size_t indent)
 {
-
   BOLT_FUNC(indent, false, "SparseGraph::findGraphNeighbors()");
   nn_->nearestR(vertex, dist, graphNeighbors);
-
 }
 
-std::vector<otb::SparseEdge> otb::SparseGraph::getNeighborsEdges(ompl::base::State *state, double dist,
-        std::vector<SparseEdge> &edges, size_t indent )
+std::vector<otb::SparseEdge> otb::SparseGraph::getNeighborsEdges(ompl::base::State *state, double dist, size_t indent )
 {
 
   SparseVertex v = addVertex(state,VertexType::UNKNOWN ,1);
@@ -1580,34 +1577,45 @@ std::vector<otb::SparseEdge> otb::SparseGraph::getNeighborsEdges(ompl::base::Sta
   SparseEdgeOutIt out, out_end;
   std::set<SparseEdge> unique_edges;
   std::vector<SparseVertex> graphNeighbors;
+ // TODO check if it is not better to create temporary graph
 
-  if(findGraphNeighbors(v, graphNeighbors,dist,indent))
+  if(findGraphNeighbors(v, graphNeighbors, dist, indent))
   {
-    for (boost::tie(out, out_end) = boost::out_edges(v, g_); out != out_end; ++out)
+    for (auto iter = graphNeighbors.begin(); iter != graphNeighbors.end(); iter++)
     {
-      auto source = boost::source ( *out, g_ );
-      auto target = boost::target ( *out, g_ );
-      if ( si_->distance(g_[target].state_, state) > dist)
+
+      for (boost::tie(out, out_end) = boost::out_edges(*iter, g_); out != out_end; ++out)
       {
-        SparseVertex v_intermediate = getIntermediateVertex(source, target, dist , indent);
-        unique_edges.insert(addEdge(v, v_intermediate,EdgeType::eINTERMEDIATE,indent));
-      }else
-        unique_edges.insert(*out);
-    }
-    for (boost::tie(in, in_end) = boost::in_edges(v, g_); in != in_end; ++in)
-    {
-      auto source = boost::source ( *out, g_ );
-      auto target = boost::target ( *out, g_ );
-      if ( si_->distance(g_[target].state_, state) > dist)
+        auto source = boost::source ( *out, g_ );
+        auto target = boost::target ( *out, g_ );
+        if ( si_->distance(g_[target].state_, state) > dist)
+        {
+          SparseVertex v_intermediate = getIntermediateVertex(source, target, dist , indent);
+          if(unique_edges.insert(addEdge(source, v_intermediate,EdgeType::eINTERMEDIATE,indent)).second)
+            intermediateVertices_.push_back(v_intermediate);
+
+        }else
+          unique_edges.insert(*out);
+      }
+      
+      for (boost::tie(in, in_end) = boost::in_edges(*iter, g_); in != in_end; ++in)
       {
-        SparseVertex v_intermediate = getIntermediateVertex(target, source, dist , indent);
-        unique_edges.insert(addEdge(v, v_intermediate,EdgeType::eINTERMEDIATE,indent));
-      }else
-        unique_edges.insert(*out);
+        auto source = boost::source ( *in, g_ );
+        auto target = boost::target ( *in, g_ );
+        if ( si_->distance(g_[target].state_, state) > dist)
+        {
+          SparseVertex v_intermediate = getIntermediateVertex(target, source, dist , indent);
+          if(unique_edges.insert(addEdge(target, v_intermediate,EdgeType::eINTERMEDIATE,indent)).second)
+            intermediateVertices_.push_back(v_intermediate);
+        }else
+          unique_edges.insert(*in);
+      }
     }
-    return std::vector<SparseEdge>(unique_edges.begin(), unique_edges.end());
   }
-  return {};
+  removeVertex(v, indent); // Can remove because there are no edges created for this vertex
+  return  !unique_edges.empty() ? std::vector<SparseEdge>(unique_edges.begin(), unique_edges.end()) :
+          std::vector<SparseEdge>();
+
 }
 
 otb::SparseVertex otb::SparseGraph::getIntermediateVertex(otb::SparseVertex v1, otb::SparseVertex v2, double dist,
@@ -1630,3 +1638,4 @@ otb::SparseVertex otb::SparseGraph::getIntermediateVertex(otb::SparseVertex v1, 
   }
   return  addVertex(intermediate_state, VertexType::INTERMEDIATE, indent);
 }
+

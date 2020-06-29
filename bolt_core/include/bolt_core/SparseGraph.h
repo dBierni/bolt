@@ -154,8 +154,7 @@ public:
   bool findGraphNeighbors(SparseVertex  vertex,  std::vector<SparseVertex> &graphNeighbors,
                                             double dist, std::size_t indent);
 
-  std::vector<SparseEdge> getNeighborsEdges(ompl::base::State *state, double dist,
-                                                                 std::vector<SparseEdge> &edges, size_t indent = 1);
+  std::vector<SparseEdge> getNeighborsEdges(ompl::base::State *state, double dist, size_t indent = 1);
 
   SparseVertex getIntermediateVertex(SparseVertex v1, SparseVertex v2, double dist, size_t indent);
 
@@ -479,6 +478,7 @@ protected:
 
   /** \brief Vertices for performing nearest neighbor queries on multiple threads */
   std::vector<SparseVertex> queryVertices_;
+  std::vector<SparseVertex> intermediateVertices_;
   std::vector<base::State*> queryStates_;
 
 /** \brief Access to the weights of each Edge */
