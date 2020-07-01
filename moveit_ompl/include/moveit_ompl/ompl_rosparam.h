@@ -66,6 +66,7 @@ Eigen::Isometry3d convertVectorToPose(const std::vector<double> pose)
   shared_pose_eigen_.translation().z() = pose[2];
   return shared_pose_eigen_;
 }
+bool getFilePath(std::string &file_path, const std::string &file_name, const std::string &home_directory);
 
 void loadOMPLParameters(ompl::tools::bolt::BoltPtr bolt)
 {
@@ -73,14 +74,14 @@ void loadOMPLParameters(ompl::tools::bolt::BoltPtr bolt)
   std::size_t error = 0;
   ros::NodeHandle nh;
 
-  ompl::tools::bolt::SparseGraphPtr sparseGraph = bolt->getSparseGraph();
-  BOLT_ASSERT(sparseGraph, "Sparse graph is not initialized");
-  ompl::tools::bolt::SparseSmootherPtr sparseSmoother = sparseGraph->getSparseSmoother();
-  BOLT_ASSERT(sparseSmoother, "Sparse smoothing is not initialized");
+//  ompl::tools::bolt::SparseGraphPtr sparseGraph = bolt->getSparseGraph();
+//  BOLT_ASSERT(sparseGraph, "Sparse graph is not initialized");
+//  ompl::tools::bolt::SparseSmootherPtr sparseSmoother = sparseGraph->getSparseSmoother();
+//  BOLT_ASSERT(sparseSmoother, "Sparse smoothing is not initialized");
   ompl::tools::bolt::TaskGraphPtr taskGraph = bolt->getTaskGraph();
   BOLT_ASSERT(taskGraph, "Task graph is not initialized");
-  ompl::tools::bolt::SparseCriteriaPtr sparseCriteria = bolt->getSparseCriteria();
-  BOLT_ASSERT(sparseCriteria, "Sparse criteria is not initialized");
+//  ompl::tools::bolt::SparseCriteriaPtr sparseCriteria = bolt->getSparseCriteria();
+//  BOLT_ASSERT(sparseCriteria, "Sparse criteria is not initialized");
   ompl::tools::bolt::SparseGeneratorPtr sparseGenerator = bolt->getSparseGenerator();
   BOLT_ASSERT(sparseGenerator, "Sparse generator is not initialized");
   ompl::tools::bolt::SparseMirrorPtr sparseMirror = bolt->getSparseMirror();
@@ -110,8 +111,14 @@ void loadOMPLParameters(ompl::tools::bolt::BoltPtr bolt)
                                                              "e"), graph_file_name);
     error += !get(name, rpnh, "graph_" + std::to_string(i) + "/pose", poses);
     std::cout <<std::endl << " Name: " << graph_file_name << std::endl;
+    std::string file_path;
 
-    bolt->initializeGraph(convertVectorToPose(poses), graph_file_name);
+    if (!getFilePath(file_path, graph_file_name,"ros/ompl_storage"))
+    {
+      ROS_ERROR_STREAM_NAMED(name, "Unable to find file path for experience framework");
+    }else
+      bolt->initializeGraph(convertVectorToPose(poses), file_path);
+
     poses.clear();
       shutdownIfError(name, error);
     }
@@ -128,61 +135,74 @@ void loadOMPLParameters(ompl::tools::bolt::BoltPtr bolt)
 
   // SparseGraph
   {
-    ros::NodeHandle rpnh(nh, "sparse_graph");
-    error += !get(name, rpnh, "obstacle_clearance", sparseGraph->obstacleClearance_);
-    error += !get(name, rpnh, "save_enabled", sparseGraph->savingEnabled_);
-    error += !get(name, rpnh, "super_debug", sparseGraph->superDebug_);
-    error += !get(name, rpnh, "verbose/add", sparseGraph->vAdd_);
-    error += !get(name, rpnh, "verbose/search", sparseGraph->vSearch_);
-    error += !get(name, rpnh, "visualize/spars_graph", sparseGraph->visualizeSparseGraph_);
-    error += !get(name, rpnh, "visualize/spars_graph_speed", sparseGraph->visualizeSparseGraphSpeed_);
-    error += !get(name, rpnh, "visualize/database_vertices", sparseGraph->visualizeDatabaseVertices_);
-    error += !get(name, rpnh, "visualize/database_edges", sparseGraph->visualizeDatabaseEdges_);
-    error += !get(name, rpnh, "visualize/database_coverage", sparseGraph->visualizeDatabaseCoverage_);
-    error += !get(name, rpnh, "visualize/projection", sparseGraph->visualizeProjection_);
-    error += !get(name, rpnh, "visualize/graph_after_loading", sparseGraph->visualizeGraphAfterLoading_);
-    error += !get(name, rpnh, "visualize/astar", sparseGraph->visualizeAstar_);
-    error += !get(name, rpnh, "visualize/astar_speed", sparseGraph->visualizeAstarSpeed_);
-    error += !get(name, rpnh, "visualize/voronoi_diagram", sparseGraph->visualizeVoronoiDiagram_);
-    error += !get(name, rpnh, "visualize/voronoi_diagram_animated", sparseGraph->visualizeVoronoiDiagramAnimated_);
-    shutdownIfError(name, error);
-  }
 
-  // SparseSmoother
-  {
-    ros::NodeHandle rpnh(nh, "sparse_smoother");
-    error += !get(name, rpnh, "visualize/quality_path_smoothing", sparseSmoother->visualizeQualityPathSmoothing_);
-    shutdownIfError(name, error);
-  }
+    for (std::size_t i = 0; i < bolt->getSparseGraphsSize(); i++) {
 
-  // SparseCriteria
-  {
-    ros::NodeHandle rpnh(nh, "sparse_criteria");
-    error += !get(name, rpnh, "sparse_delta_fraction", sparseCriteria->sparseDeltaFraction_);
-    error += !get(name, rpnh, "near_sample_points_multiple", sparseCriteria->nearSamplePointsMultiple_);
-    error += !get(name, rpnh, "stretch_factor", sparseCriteria->stretchFactor_);
-    error += !get(name, rpnh, "penetration_overlap_fraction", sparseCriteria->penetrationOverlapFraction_);
-    error += !get(name, rpnh, "use_l2_norm", sparseCriteria->useL2Norm_);
-    error += !get(name, rpnh, "use_edge_improvement_rule", sparseCriteria->useEdgeImprovementRule_);
-    error += !get(name, rpnh, "use_clear_edges_near_vertex", sparseCriteria->useClearEdgesNearVertex_);
-    error += !get(name, rpnh, "use_connectivy_criteria", sparseCriteria->useConnectivityCriteria_);
-    error += !get(name, rpnh, "use_quality_criteria", sparseCriteria->useQualityCriteria_);
-    error += !get(name, rpnh, "use_direct_connectivity_criteria", sparseCriteria->useDirectConnectivyCriteria_);
-    error += !get(name, rpnh, "use_smoothed_path_improvement_rule", sparseCriteria->useSmoothedPathImprovementRule_);
-    error += !get(name, rpnh, "verbose/criteria", sparseCriteria->vCriteria_);
-    error += !get(name, rpnh, "verbose/quality", sparseCriteria->vQuality_);
-    error += !get(name, rpnh, "verbose/quality_max_spanner", sparseCriteria->vQualityMaxSpanner_);
-    error += !get(name, rpnh, "verbose/remove_close", sparseCriteria->vRemoveClose_);
-    error += !get(name, rpnh, "verbose/added_reason", sparseCriteria->vAddedReason_);
-    error += !get(name, rpnh, "visualize/attempted_states", sparseCriteria->visualizeAttemptedStates_);
-    error += !get(name, rpnh, "visualize/connectivity", sparseCriteria->visualizeConnectivity_);
-    error += !get(name, rpnh, "visualize/remove_close_vertices", sparseCriteria->visualizeRemoveCloseVertices_);
-    error += !get(name, rpnh, "visualize/quality_criteria", sparseCriteria->visualizeQualityCriteria_);
-    error +=
-        !get(name, rpnh, "visualize/quality_criteria_close_reps", sparseCriteria->visualizeQualityCriteriaCloseReps_);
-    error += !get(name, rpnh, "visualize/quality_criteria_sampler", sparseCriteria->visualizeQualityCriteriaSampler_);
-    error += !get(name, rpnh, "visualize/quality_criteria_astar", sparseCriteria->visualizeQualityCriteriaAstar_);
-    shutdownIfError(name, error);
+      ros::NodeHandle rpnh(nh, "sparse_graph");
+      ompl::tools::bolt::SparseGraphPtr sparseGraph = bolt->getSparseGraph(i);
+      BOLT_ASSERT(sparseGraph, "Sparse graph is not initialized");
+      ompl::tools::bolt::SparseCriteriaPtr sparseCriteria = bolt->getSparseCriteria(i);
+      BOLT_ASSERT(sparseCriteria, "Sparse criteria is not initialized");
+      ompl::tools::bolt::SparseSmootherPtr sparseSmoother = sparseGraph->getSparseSmoother();
+      BOLT_ASSERT(sparseSmoother, "Sparse smoothing is not initialized");
+
+      error += !get(name, rpnh, "obstacle_clearance", sparseGraph->obstacleClearance_);
+      error += !get(name, rpnh, "save_enabled", sparseGraph->savingEnabled_);
+      error += !get(name, rpnh, "super_debug", sparseGraph->superDebug_);
+      error += !get(name, rpnh, "verbose/add", sparseGraph->vAdd_);
+      error += !get(name, rpnh, "verbose/search", sparseGraph->vSearch_);
+      error += !get(name, rpnh, "visualize/spars_graph", sparseGraph->visualizeSparseGraph_);
+      error += !get(name, rpnh, "visualize/spars_graph_speed", sparseGraph->visualizeSparseGraphSpeed_);
+      error += !get(name, rpnh, "visualize/database_vertices", sparseGraph->visualizeDatabaseVertices_);
+      error += !get(name, rpnh, "visualize/database_edges", sparseGraph->visualizeDatabaseEdges_);
+      error += !get(name, rpnh, "visualize/database_coverage", sparseGraph->visualizeDatabaseCoverage_);
+      error += !get(name, rpnh, "visualize/projection", sparseGraph->visualizeProjection_);
+      error += !get(name, rpnh, "visualize/graph_after_loading", sparseGraph->visualizeGraphAfterLoading_);
+      error += !get(name, rpnh, "visualize/astar", sparseGraph->visualizeAstar_);
+      error += !get(name, rpnh, "visualize/astar_speed", sparseGraph->visualizeAstarSpeed_);
+      error += !get(name, rpnh, "visualize/voronoi_diagram", sparseGraph->visualizeVoronoiDiagram_);
+      error += !get(name, rpnh, "visualize/voronoi_diagram_animated", sparseGraph->visualizeVoronoiDiagramAnimated_);
+      shutdownIfError(name, error);
+
+
+      // SparseSmoother
+
+      ros::NodeHandle rpnhs(nh, "sparse_smoother");
+      error += !get(name, rpnhs, "visualize/quality_path_smoothing", sparseSmoother->visualizeQualityPathSmoothing_);
+      shutdownIfError(name, error);
+
+
+      // SparseCriteria
+
+      ros::NodeHandle rpnhc(nh, "sparse_criteria");
+      error += !get(name, rpnhc, "sparse_delta_fraction", sparseCriteria->sparseDeltaFraction_);
+      error += !get(name, rpnhc, "near_sample_points_multiple", sparseCriteria->nearSamplePointsMultiple_);
+      error += !get(name, rpnhc, "stretch_factor", sparseCriteria->stretchFactor_);
+      error += !get(name, rpnhc, "penetration_overlap_fraction", sparseCriteria->penetrationOverlapFraction_);
+      error += !get(name, rpnhc, "use_l2_norm", sparseCriteria->useL2Norm_);
+      error += !get(name, rpnhc, "use_edge_improvement_rule", sparseCriteria->useEdgeImprovementRule_);
+      error += !get(name, rpnhc, "use_clear_edges_near_vertex", sparseCriteria->useClearEdgesNearVertex_);
+      error += !get(name, rpnhc, "use_connectivy_criteria", sparseCriteria->useConnectivityCriteria_);
+      error += !get(name, rpnhc, "use_quality_criteria", sparseCriteria->useQualityCriteria_);
+      error += !get(name, rpnhc, "use_direct_connectivity_criteria", sparseCriteria->useDirectConnectivyCriteria_);
+      error += !get(name, rpnhc, "use_smoothed_path_improvement_rule", sparseCriteria->useSmoothedPathImprovementRule_);
+      error += !get(name, rpnhc, "verbose/criteria", sparseCriteria->vCriteria_);
+      error += !get(name, rpnhc, "verbose/quality", sparseCriteria->vQuality_);
+      error += !get(name, rpnhc, "verbose/quality_max_spanner", sparseCriteria->vQualityMaxSpanner_);
+      error += !get(name, rpnhc, "verbose/remove_close", sparseCriteria->vRemoveClose_);
+      error += !get(name, rpnhc, "verbose/added_reason", sparseCriteria->vAddedReason_);
+      error += !get(name, rpnhc, "visualize/attempted_states", sparseCriteria->visualizeAttemptedStates_);
+      error += !get(name, rpnhc, "visualize/connectivity", sparseCriteria->visualizeConnectivity_);
+      error += !get(name, rpnhc, "visualize/remove_close_vertices", sparseCriteria->visualizeRemoveCloseVertices_);
+      error += !get(name, rpnhc, "visualize/quality_criteria", sparseCriteria->visualizeQualityCriteria_);
+      error +=
+            !get(name, rpnhc, "visualize/quality_criteria_close_reps",
+                 sparseCriteria->visualizeQualityCriteriaCloseReps_);
+      error += !get(name, rpnhc, "visualize/quality_criteria_sampler", sparseCriteria->visualizeQualityCriteriaSampler_);
+      error += !get(name, rpnhc, "visualize/quality_criteria_astar", sparseCriteria->visualizeQualityCriteriaAstar_);
+      shutdownIfError(name, error);
+
+    }
   }
 
   // SparseGenerator

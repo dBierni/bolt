@@ -94,6 +94,7 @@ void Bolt::initialize(std::size_t indent)
   sparseMirror_.reset(new SparseMirror(sparseGraph_));
 
   sparseGraphsVec_.reset(new std::vector<std::pair<Eigen::Isometry3d , SparseGraphPtr>>());
+  sparseCriteriaVec_.reset(new std::vector<SparseCriteriaPtr>());
   graphsInfo_.reset(new std::vector<GraphInfo>());
 
   // ----------------------------------------------------------------------------
@@ -438,44 +439,25 @@ bool Bolt::load(std::size_t indent)
 bool Bolt::load(std::size_t indent, bool load)
 {
   // Load from file
-  assert(graphsInfo_->size() > 0);
-
-  for (auto it = graphsInfo_->begin(); it != graphsInfo_->end(); it++)
+  assert(sparseGraphsVec_->size() > 0);
+  for (auto it = sparseGraphsVec_->begin(); it != sparseGraphsVec_->end(); it++)
   {
-    BOLT_WARN(1, true, "TU??");
-//    SparseGraphPtr sg_ = std::make_shared<SparseGraph>(si_, visual_);
-    BOLT_WARN(1, true, "TU2??");
-
-    sparseGraphsVec_->emplace_back(it->pose_, std::move(std::make_shared<SparseGraph>(si_, visual_)));
-//    sparseGraphsVec_->push_back(std::make_pair(it->pose_, sg_));
-    BOLT_WARN(1, true, "TU3??");
-
-//    if (!sparseGraphsVec_->end()->second->isEmpty())
-//    {
-//      BOLT_WARN(1, true, "TU3.5??");
-//
-////      BOLT_WARN(indent, 1, "Database already loaded, vertices: " << sparseGraphsVec_->end()->second->getNumVertices()
-////                                                                 << ", edges: " << sparseGraphsVec_->end()->second->getNumEdges()
-////                                                                 << ", queryV: " << sparseGraphsVec_->end()->second->getNumQueryVertices());
-//      continue;
-//    }
-    BOLT_WARN(1, true, "TU4??");
-
-    (sparseGraphsVec_->end())->second->setFilePath(it->name_ + it->path_ + ".ompl");
-    BOLT_WARN(1, true, "TU5??");
-
-    if (!(sparseGraphsVec_->end())->second->load())  // load from file
+    if(!(it->second->load()))  // load from file
     {
-      graphsInfo_->erase( it--);
-      sparseGraphsVec_->erase(sparseGraphsVec_->end());
+      auto remove_it = std::remove_if(sparseCriteriaVec_->begin(),sparseCriteriaVec_->end(),
+              [it](SparseCriteriaPtr sc){
+        return sc == it->second->getSparseCriteria();
+      });
+      sparseCriteriaVec_->erase(remove_it);
+      sparseGraphsVec_->erase(it --);
+      continue;
     }
 
    // taskGraph_->generateTaskSpace(1);
     BOLT_WARN(1, true, "TU7??");
-
   }
 
-  if ((sparseGraphsVec_->size() == graphsInfo_->size()) && sparseGraphsVec_->size() > 0)
+  if (sparseGraphsVec_->size() > 0)
   {
     BOLT_INFO(indent, true, "Number of loaded graphs to database: " << sparseGraphsVec_->size());
     return true;
@@ -526,7 +508,14 @@ void Bolt::printLogs(std::ostream &out) const
 void Bolt::initializeGraph(Eigen::Isometry3d pose,std::string name)
 {
   graphsInfo_->push_back(GraphInfo(pose, name));
+  sparseGraphsVec_->emplace_back(pose, std::move(std::make_shared<SparseGraph>(si_, visual_)));
+  sparseGraphsVec_->back().second->setFilePath( name + ".ompl");
+  sparseCriteriaVec_->push_back(SparseCriteriaPtr(new SparseCriteria(sparseGraphsVec_->back().second)));
+  sparseGraphsVec_->back().second->setSparseCriteria(sparseCriteriaVec_->back());
+
+  assert(sparseCriteriaVec_->size() == sparseGraphsVec_->size());
 }
+
 
 }  // namespace bolt
 }  // namespace tools

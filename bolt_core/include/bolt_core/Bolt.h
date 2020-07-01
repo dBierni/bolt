@@ -293,11 +293,18 @@ public:
   {
     return(*sparseGraphsVec_)[i].second;
   }
-
+  std::size_t getSparseGraphsSize()
+  {
+    return sparseGraphsVec_->size();
+  }
   Eigen::Isometry3d getSparseGraphRootPose(std::size_t i)
   {
     return (*sparseGraphsVec_)[i].first;
+  }
 
+  SparseCriteriaPtr getSparseCriteria(std::size_t i)
+  {
+    return(*sparseCriteriaVec_)[i];
   }
 
   /** \brief Get class for managing various visualization features */
@@ -330,6 +337,8 @@ protected:
 
   /** \brief The graph that contains a sparse roadmap of the space and the root position for which sparse roadmap was generated */
   std::unique_ptr<std::vector<std::pair<Eigen::Isometry3d, SparseGraphPtr>>> sparseGraphsVec_;
+
+  std::shared_ptr<std::vector<SparseCriteriaPtr>> sparseCriteriaVec_;
 
   std::shared_ptr<std::vector<GraphInfo>> graphsInfo_;
 
