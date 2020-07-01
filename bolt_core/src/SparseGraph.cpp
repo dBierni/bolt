@@ -819,6 +819,10 @@ SparseVertex SparseGraph::addVertex(base::State *state, const VertexType &type, 
       break;
     case DISCRETIZED:
       break;
+    case INTERMEDIATE:
+      break;
+    case UNKNOWN:
+      break;
     default:
       OMPL_ERROR("Unknown VertexType type %u", type);
   }
@@ -1568,44 +1572,58 @@ void otb::SparseAstarVisitor::examine_vertex(SparseVertex v, const SparseAdjList
 bool otb::SparseGraph::findGraphNeighbors(SparseVertex  vertex,  std::vector<SparseVertex> &graphNeighbors,
        double dist, std::size_t indent)
 {
-  BOLT_FUNC(indent, false, "SparseGraph::findGraphNeighbors()");
   nn_->nearestR(vertex, dist, graphNeighbors);
+  BOLT_FUNC(indent, true, "SparseGraph::findGraphNeighbors() size: " <<   graphNeighbors.size());
+
+  return graphNeighbors.empty() ? false : true;
 }
 
 std::vector<otb::SparseEdge> otb::SparseGraph::getNeighborsEdges(ompl::base::State *state, double dist, size_t indent )
 {
 
   SparseVertex v = addVertex(state,VertexType::UNKNOWN ,1);
-  SparseEdgeInIt in, in_end;
-  SparseEdgeOutIt out, out_end;
   std::set<SparseEdge> unique_edges;
   std::vector<SparseVertex> graphNeighbors;
+  size_t notExistVertexes = 0;
  // TODO check if it is not better to create temporary graph
 
   if(findGraphNeighbors(v, graphNeighbors, dist, indent))
   {
+    auto start = std::chrono::high_resolution_clock::now();
     for (auto iter = graphNeighbors.begin(); iter != graphNeighbors.end(); iter++)
     {
-
-      for (boost::tie(out, out_end) = boost::out_edges(*iter, g_); out != out_end; ++out)
+      SparseEdgeInIt in, in_end;
+      SparseEdgeOutIt out, out_end;
+      for (boost::tie(out, out_end) = boost::out_edges(*iter, g_); out != out_end; out++)
       {
-        auto source = boost::source ( *out, g_ );
-        auto target = boost::target ( *out, g_ );
-        if ( si_->distance(g_[target].state_, state) > dist)
+        SparseVertex source = boost::source ( *out, g_ ); // equal to g_[*iter].state_
+        SparseVertex target = boost::target ( *out, g_ );
+        // TODO Why edge has target vertex which does not exist ? hopefully it will not slow down as much.
+        if(!boost::in_vertex_set(g_, target))
+        {
+          notExistVertexes++;
+          continue;
+        }
+        if (si_->distance(g_[target].state_, state) > dist)
         {
           SparseVertex v_intermediate = getIntermediateVertex(source, target, dist , indent);
           if(unique_edges.insert(addEdge(source, v_intermediate,EdgeType::eINTERMEDIATE,indent)).second)
             intermediateVertices_.push_back(v_intermediate);
-
         }else
           unique_edges.insert(*out);
       }
-
-      for (boost::tie(in, in_end) = boost::in_edges(*iter, g_); in != in_end; ++in)
+      for (boost::tie(in, in_end) = boost::in_edges(*iter, g_); in != in_end; in++)
       {
-        auto source = boost::source ( *in, g_ );
-        auto target = boost::target ( *in, g_ );
-        if ( si_->distance(g_[target].state_, state) > dist)
+        SparseVertex source = boost::source ( *in, g_ );
+        SparseVertex target = boost::target ( *in, g_ ); // equal to g_[*iter].state_
+
+        // TODO Why edge has target vertex which does not exist ? hopefully it will not slow down as much.
+        if(!boost::in_vertex_set(g_, source))
+        {
+          notExistVertexes++;
+          continue;
+        }
+        if ( si_->distance(g_[source].state_, state) > dist)
         {
           SparseVertex v_intermediate = getIntermediateVertex(target, source, dist , indent);
           if(unique_edges.insert(addEdge(target, v_intermediate,EdgeType::eINTERMEDIATE,indent)).second)
@@ -1614,18 +1632,24 @@ std::vector<otb::SparseEdge> otb::SparseGraph::getNeighborsEdges(ompl::base::Sta
           unique_edges.insert(*in);
       }
     }
+    auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start);
+
+    BOLT_WARN(indent,true, "Neighbors edges founded in "<< diff.count() << " ms");
+    BOLT_WARN(indent,true, "Number of  Vertex ("<< notExistVertexes << ") which do not exist in graph");
+
   }
+
+
   removeVertex(v, indent); // Can remove because there are no edges created for this vertex
   return  !unique_edges.empty() ? std::vector<SparseEdge>(unique_edges.begin(), unique_edges.end()) :
           std::vector<SparseEdge>();
-
 }
 
 otb::SparseVertex otb::SparseGraph::getIntermediateVertex(otb::SparseVertex v1, otb::SparseVertex v2, double dist,
         size_t indent)
 {
   const unsigned int count = si_->getStateSpace()->validSegmentCount(g_[v1].state_, g_[v2].state_);
-  ompl::base::State *intermediate_state = nullptr;
+  ompl::base::State *intermediate_state = si_->allocState();
   std::vector<ompl::base::State *> states;
 
   if (si_->getMotionStates(g_[v1].state_, g_[v2].state_, states, count, true, true))
@@ -1639,6 +1663,6 @@ otb::SparseVertex otb::SparseGraph::getIntermediateVertex(otb::SparseVertex v1, 
     }else
       break;
   }
-  return  addVertex(intermediate_state, VertexType::INTERMEDIATE, indent);
+  return  SparseVertex(addVertex(intermediate_state, VertexType::INTERMEDIATE, indent));
 }
 
