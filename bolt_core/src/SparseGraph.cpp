@@ -569,7 +569,10 @@ double SparseGraph::distanceFunction(SparseVertex a, SparseVertex b) const
 
 bool SparseGraph::isEmpty() const
 {
+  BOLT_WARN(1, true,"isEmpty SparseGraph");
   assert(!(getNumVertices() < getNumQueryVertices()));
+  BOLT_WARN(1, true,"isEmpty SparseGraph2");
+
   return (getNumVertices() == getNumQueryVertices() && getNumEdges() == 0);
 }
 
@@ -1597,7 +1600,7 @@ std::vector<otb::SparseEdge> otb::SparseGraph::getNeighborsEdges(ompl::base::Sta
         }else
           unique_edges.insert(*out);
       }
-      
+
       for (boost::tie(in, in_end) = boost::in_edges(*iter, g_); in != in_end; ++in)
       {
         auto source = boost::source ( *in, g_ );

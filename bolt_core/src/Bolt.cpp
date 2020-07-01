@@ -94,6 +94,7 @@ void Bolt::initialize(std::size_t indent)
   sparseMirror_.reset(new SparseMirror(sparseGraph_));
 
   sparseGraphsVec_.reset(new std::vector<std::pair<Eigen::Isometry3d , SparseGraphPtr>>());
+  graphsInfo_.reset(new std::vector<GraphInfo>());
 
   // ----------------------------------------------------------------------------
   // CompoundState settings for task planning
@@ -437,30 +438,44 @@ bool Bolt::load(std::size_t indent)
 bool Bolt::load(std::size_t indent, bool load)
 {
   // Load from file
-  assert(graphsInfo_.size() == 0);
+  assert(graphsInfo_->size() > 0);
 
-  for (auto it = graphsInfo_.begin(); it != graphsInfo_.end(); it++)
+  for (auto it = graphsInfo_->begin(); it != graphsInfo_->end(); ++it)
   {
-    SparseGraphPtr sg_ = std::make_shared<SparseGraph>(si_, visual_);
-    sparseGraphsVec_->emplace_back(it->pose_,std::move(sg_));
-    if (!sparseGraphsVec_->end()->second->isEmpty())
-    {
-      BOLT_WARN(indent, 1, "Database already loaded, vertices: " << sparseGraph_->getNumVertices()
-                                                                 << ", edges: " << sparseGraph_->getNumEdges()
-                                                                 << ", queryV: " << sparseGraph_->getNumQueryVertices());
-      continue;
-    }
+    BOLT_WARN(1, true, "TU??");
+//    SparseGraphPtr sg_ = std::make_shared<SparseGraph>(si_, visual_);
+    BOLT_WARN(1, true, "TU2??");
 
-    sparseGraphsVec_->end()->second->setFilePath(it->name_);
-    if (!sparseGraphsVec_->end()->second->load())  // load from file
+    sparseGraphsVec_->emplace_back(it->pose_, std::move(std::make_shared<SparseGraph>(si_, visual_)));
+//    sparseGraphsVec_->push_back(std::make_pair(it->pose_, sg_));
+    BOLT_WARN(1, true, "TU3??");
+
+//    if (!sparseGraphsVec_->end()->second->isEmpty())
+//    {
+//      BOLT_WARN(1, true, "TU3.5??");
+//
+////      BOLT_WARN(indent, 1, "Database already loaded, vertices: " << sparseGraphsVec_->end()->second->getNumVertices()
+////                                                                 << ", edges: " << sparseGraphsVec_->end()->second->getNumEdges()
+////                                                                 << ", queryV: " << sparseGraphsVec_->end()->second->getNumQueryVertices());
+//      continue;
+//    }
+    BOLT_WARN(1, true, "TU4??");
+
+    (sparseGraphsVec_->end()-1)->second->setFilePath(it->name_ + it->path_ + ".ompl");
+    BOLT_WARN(1, true, "TU5??");
+
+    if (!(sparseGraphsVec_->end()-1)->second->load())  // load from file
     {
-      graphsInfo_.erase( it--);
+      graphsInfo_->erase( it--);
       sparseGraphsVec_->erase(sparseGraphsVec_->end());
     }
+
    // taskGraph_->generateTaskSpace(1);
+    BOLT_WARN(1, true, "TU7??");
+
   }
 
-  if ((sparseGraphsVec_->size() == graphsInfo_.size()) && sparseGraphsVec_->size() > 0)
+  if ((sparseGraphsVec_->size() == graphsInfo_->size()) && sparseGraphsVec_->size() > 0)
   {
     BOLT_INFO(indent, true, "Number of loaded graphs to database: " << sparseGraphsVec_->size());
     return true;
@@ -510,11 +525,7 @@ void Bolt::printLogs(std::ostream &out) const
 }
 void Bolt::initializeGraph(Eigen::Isometry3d pose,std::string name)
 {
-//  SparseGraphPtr sg_ = std::make_shared<SparseGraph>(si_, visual_);
-//  sparseGraphsVec_->emplace_back(GraphInfo(pose, name),nullptr);
-
-  graphsInfo_.push_back(GraphInfo(pose, name));
-
+  graphsInfo_->push_back(GraphInfo(pose, name));
 }
 
 }  // namespace bolt

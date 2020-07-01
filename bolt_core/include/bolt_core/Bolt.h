@@ -139,6 +139,7 @@ struct ExperienceStats
 
 struct GraphInfo{
     std::string name_;
+    std::string path_;
     Eigen::Isometry3d pose_;
 
     GraphInfo(Eigen::Isometry3d pose, std::string name): pose_(pose), name_(name)
@@ -280,8 +281,23 @@ public:
 
   SparseGeneratorPtr getSparseGenerator()
   {
-
     return sparseGenerator_;
+  }
+
+  std::pair<Eigen::Isometry3d, SparseGraphPtr> getSparseGraphFull(std::size_t i)
+  {
+    return (*sparseGraphsVec_)[i];
+  }
+
+  SparseGraphPtr getSparseGraph(std::size_t i)
+  {
+    return(*sparseGraphsVec_)[i].second;
+  }
+
+  Eigen::Isometry3d getSparseGraphRootPose(std::size_t i)
+  {
+    return (*sparseGraphsVec_)[i].first;
+
   }
 
   /** \brief Get class for managing various visualization features */
@@ -290,7 +306,7 @@ public:
     return visual_;
   }
 
-  std::vector<GraphInfo> getGraphsInfo()
+  std::shared_ptr<std::vector<GraphInfo>> getGraphsInfo()
   {
     return graphsInfo_;
   }
@@ -314,7 +330,8 @@ protected:
 
   /** \brief The graph that contains a sparse roadmap of the space and the root position for which sparse roadmap was generated */
   std::unique_ptr<std::vector<std::pair<Eigen::Isometry3d, SparseGraphPtr>>> sparseGraphsVec_;
-  std::vector<GraphInfo> graphsInfo_;
+
+  std::shared_ptr<std::vector<GraphInfo>> graphsInfo_;
 
   /** \brief Various tests to determine if a vertex/edge should be added to the graph, based on SPARS */
   SparseCriteriaPtr sparseCriteria_;

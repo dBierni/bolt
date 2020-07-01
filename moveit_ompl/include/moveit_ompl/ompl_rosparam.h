@@ -103,6 +103,7 @@ void loadOMPLParameters(ompl::tools::bolt::BoltPtr bolt)
     error += !get(name, rpnh, "visualize/robot_trajectory", bolt->visualizeRobotTrajectory_);
 
     error += !get(name, rpnh, "graphs_switch/graphs_quantity", bolt->graphsQuantity_);
+    std::cout <<std::endl << " Name: " << bolt->graphsQuantity_ << std::endl;
 
     for(std::size_t i = 0; i < bolt->graphsQuantity_; i++ )
     {
@@ -110,6 +111,7 @@ void loadOMPLParameters(ompl::tools::bolt::BoltPtr bolt)
                                                              "e"), graph_file_name);
     error += !get(name, rpnh, "graph_" + std::to_string(i) + "/pose", poses);
     std::cout <<std::endl << " Name: " << graph_file_name << std::endl;
+
     bolt->initializeGraph(convertVectorToPose(poses), graph_file_name);
     poses.clear();
       shutdownIfError(name, error);
@@ -245,6 +247,7 @@ void loadOMPLParameters(ompl::tools::bolt::BoltPtr bolt)
     error += !get(name, rpnh, "verbose/thread", candidateQueue->vThread_);
     shutdownIfError(name, error);
   }
+
 }
 
 /**

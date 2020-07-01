@@ -425,6 +425,8 @@ protected:
   /** \brief Short name of this class */
   const std::string name_ = "TaskGraph";
 
+  std::mutex graphGeneratorMutex_;
+
   /** \brief Sparse graph main datastructure that this class operates on */
   SparseGraphPtr sg_;
 

@@ -181,6 +181,7 @@ public:
   /** \brief Set the file path to load/save to/from */
   void setFilePath(const std::string& filePath)
   {
+    BOLT_WARN(1,true,"SparseGrapg filepath: "<< filePath);
     filePath_ = filePath;
   }
 
