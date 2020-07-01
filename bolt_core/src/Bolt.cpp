@@ -440,7 +440,7 @@ bool Bolt::load(std::size_t indent, bool load)
   // Load from file
   assert(graphsInfo_->size() > 0);
 
-  for (auto it = graphsInfo_->begin(); it != graphsInfo_->end(); ++it)
+  for (auto it = graphsInfo_->begin(); it != graphsInfo_->end(); it++)
   {
     BOLT_WARN(1, true, "TU??");
 //    SparseGraphPtr sg_ = std::make_shared<SparseGraph>(si_, visual_);
@@ -461,10 +461,10 @@ bool Bolt::load(std::size_t indent, bool load)
 //    }
     BOLT_WARN(1, true, "TU4??");
 
-    (sparseGraphsVec_->end()-1)->second->setFilePath(it->name_ + it->path_ + ".ompl");
+    (sparseGraphsVec_->end())->second->setFilePath(it->name_ + it->path_ + ".ompl");
     BOLT_WARN(1, true, "TU5??");
 
-    if (!(sparseGraphsVec_->end()-1)->second->load())  // load from file
+    if (!(sparseGraphsVec_->end())->second->load())  // load from file
     {
       graphsInfo_->erase( it--);
       sparseGraphsVec_->erase(sparseGraphsVec_->end());

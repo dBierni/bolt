@@ -103,7 +103,6 @@ void loadOMPLParameters(ompl::tools::bolt::BoltPtr bolt)
     error += !get(name, rpnh, "visualize/robot_trajectory", bolt->visualizeRobotTrajectory_);
 
     error += !get(name, rpnh, "graphs_switch/graphs_quantity", bolt->graphsQuantity_);
-    std::cout <<std::endl << " Name: " << bolt->graphsQuantity_ << std::endl;
 
     for(std::size_t i = 0; i < bolt->graphsQuantity_; i++ )
     {
