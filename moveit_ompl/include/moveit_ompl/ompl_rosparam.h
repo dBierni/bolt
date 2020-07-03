@@ -112,7 +112,10 @@ void loadOMPLParameters(ompl::tools::bolt::BoltPtr bolt)
     error += !get(name, rpnh, "graph_" + std::to_string(i) + "/pose", poses);
     std::cout <<std::endl << " Name: " << graph_file_name << std::endl;
     std::string file_path;
-
+    for( size_t i =0; i< 3 ; i++)
+    {
+      ROS_ERROR_STREAM("POSE: " << poses[i]);
+    }
     if (!getFilePath(file_path, graph_file_name,"ros/ompl_storage"))
     {
       ROS_ERROR_STREAM_NAMED(name, "Unable to find file path for experience framework");

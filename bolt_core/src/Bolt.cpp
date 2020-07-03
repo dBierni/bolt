@@ -507,7 +507,8 @@ void Bolt::printLogs(std::ostream &out) const
 }
 void Bolt::initializeGraph(Eigen::Isometry3d pose,std::string name)
 {
-  graphsInfo_->push_back(GraphInfo(pose, name));
+//  graphsInfo_->push_back(GraphInfo(pose, name));
+  BOLT_WARN(1,true, "Pose w initializeGraph: " << pose.translation().z());
   sparseGraphsVec_->emplace_back(pose, std::move(std::make_shared<SparseGraph>(si_, visual_)));
   sparseGraphsVec_->back().second->setFilePath( name + ".ompl");
   sparseCriteriaVec_->push_back(SparseCriteriaPtr(new SparseCriteria(sparseGraphsVec_->back().second)));

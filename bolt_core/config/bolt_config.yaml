@@ -148,9 +148,9 @@ bolt:
   graph_0:
     name: "bolt_arm_UR_database"
     pose:
-      x: 2
+      x: 0
       y: 0
-      z: 3
+      z: 0
 
 
 
