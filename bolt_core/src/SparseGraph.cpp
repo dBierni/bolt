@@ -1588,20 +1588,13 @@ otb::SparseAdjList otb::SparseGraph::getNeighborGraph(ompl::base::State *state, 
  // TODO check if it is not better to create temporary graph
   if(findGraphNeighbors(v, graphNeighbors, dist, indent))
   {
-    BOLT_WARN(1, true, " Co znowu nie tak?");
-
     auto start = std::chrono::high_resolution_clock::now();
-    BOLT_WARN(1, true, " Co znowu nie tak?1");
-
     for (auto iter = graphNeighbors.begin(); iter != graphNeighbors.end(); iter++)
     {
-      BOLT_WARN(1, true, " Co znowu nie tak2?");
-
       SparseEdgeInIt in, in_end;
       SparseEdgeOutIt out, out_end;
       for (boost::tie(out, out_end) = boost::out_edges(*iter, g_); out != out_end; out++)
       {
-        BOLT_WARN(1, true, " Co znowu nie tak3?");
 
         SparseVertex source = boost::source ( *out, g_ ); // equal to g_[*iter].state_
         SparseVertex target = boost::target ( *out, g_ );
@@ -1611,8 +1604,7 @@ otb::SparseAdjList otb::SparseGraph::getNeighborGraph(ompl::base::State *state, 
           notExistVertexes++;
           continue;
         }
-        BOLT_WARN(1, true, " Co znowu nie tak4?");
-        std::cout <<"( " <<source<< " , " << target <<" )"<<std::endl;
+//        std::cout <<"( " <<source<< " , " << target <<" )"<<std::endl;
 
         if (distanceFunction(target, v) > dist)
         {
@@ -1628,13 +1620,11 @@ otb::SparseAdjList otb::SparseGraph::getNeighborGraph(ompl::base::State *state, 
             addVertexEdgeToGraph(source, target, tmp_g);
         }
       }
-      BOLT_WARN(1, true, " Co znowu nie tak5?");
 
       for (boost::tie(in, in_end) = boost::in_edges(*iter, g_); in != in_end; in++)
       {
         SparseVertex source = boost::source ( *in, g_ );
         SparseVertex target = boost::target ( *in, g_ ); // equal to g_[*iter].state_
-        BOLT_WARN(1, true, " Co znowu nie tak6?");
 
         // TODO Why edge has target vertex which does not exist ? hopefully it will not slow down as much.
         if(source == 0 || !boost::in_vertex_set(g_, source)) // Hardcoded
@@ -1642,29 +1632,22 @@ otb::SparseAdjList otb::SparseGraph::getNeighborGraph(ompl::base::State *state, 
           notExistVertexes++;
           continue;
         }
-        BOLT_WARN(1, true, " Co znowu nie tak7?");
-
-        std::cout <<"( " <<source<< " , " << target <<" )"<<std::endl;
+//        std::cout <<"( " <<source<< " , " << target <<" )"<<std::endl;
 
         if ( distanceFunction(source, v) > dist)
         {
-          BOLT_WARN(1, true, " Co znowu nie tak75?");
-
           SparseVertex v_intermediate = getIntermediateVertex(target, source, dist , indent);
-          BOLT_WARN(1, true, " Co znowu nie tak76?");
           if(unique_edges.insert(addEdge(target, v_intermediate,EdgeType::eINTERMEDIATE,indent)).second)
           {
             addVertexEdgeToGraph(target, v_intermediate, tmp_g);
             intermediateVertices_.push_back(v_intermediate);
           }
-          BOLT_WARN(1, true, " Co znowu nie tak77?");
         }else
         {
           if (unique_edges.insert(*in).second)
             addVertexEdgeToGraph(source, target, tmp_g);
         }
       }
-      BOLT_WARN(1, true, " Co znowu nie tak8?");
 
     }
     auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start);
@@ -1711,7 +1694,7 @@ bool otb::SparseGraph::addVertexEdgeToGraph(otb::SparseVertex source,otb::Sparse
   si_->copyState(graph[v1].state_,g_[source].state_);
   si_->copyState(graph[v2].state_,g_[target].state_);
 
-  BOLT_WARN(1,true,"Adress" << graph[v1].state_ << " add " <<g_[source].state_);
+//  BOLT_WARN(1,true,"Adress" << graph[v1].state_ << " add " <<g_[source].state_);
 
   SparseEdge e = (boost::add_edge(v1, v2,graph)).first;
   graph[e].weight_ = si_->distance(graph[v1].state_, graph[v2].state_);
