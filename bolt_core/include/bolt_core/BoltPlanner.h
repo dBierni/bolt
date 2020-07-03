@@ -207,6 +207,8 @@ public:
   {
     return taskGraph_->getModelBasedState(Vertex);
   }
+
+
 private:
 
   /** \brief This is included in parent class, but mentioned here. Use modelSI_ instead to reduce confusion   */

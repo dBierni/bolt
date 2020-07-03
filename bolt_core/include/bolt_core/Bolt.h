@@ -284,12 +284,16 @@ public:
     return sparseGenerator_;
   }
 
-  std::pair<Eigen::Isometry3d, SparseGraphPtr> getSparseGraphFull(std::size_t i)
+  std::shared_ptr<std::vector<std::pair<Eigen::Isometry3d, SparseGraphPtr>>> getSparseGraphs()
+  {
+    return sparseGraphsVec_;
+  }
+  std::pair<Eigen::Isometry3d, SparseGraphPtr> &getSparseGraphFull(std::size_t i)
   {
     return (*sparseGraphsVec_)[i];
   }
 
-  SparseGraphPtr getSparseGraph(std::size_t i)
+  SparseGraphPtr &getSparseGraph(std::size_t i)
   {
     return(*sparseGraphsVec_)[i].second;
   }
@@ -336,7 +340,7 @@ protected:
   SparseGraphPtr sparseGraph_;
 
   /** \brief The graph that contains a sparse roadmap of the space and the root position for which sparse roadmap was generated */
-  std::unique_ptr<std::vector<std::pair<Eigen::Isometry3d, SparseGraphPtr>>> sparseGraphsVec_;
+  std::shared_ptr<std::vector<std::pair<Eigen::Isometry3d, SparseGraphPtr>>> sparseGraphsVec_;
 
   std::shared_ptr<std::vector<SparseCriteriaPtr>> sparseCriteriaVec_;
 

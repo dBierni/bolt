@@ -1578,59 +1578,94 @@ bool otb::SparseGraph::findGraphNeighbors(SparseVertex  vertex,  std::vector<Spa
   return graphNeighbors.empty() ? false : true;
 }
 
-std::vector<otb::SparseEdge> otb::SparseGraph::getNeighborsEdges(ompl::base::State *state, double dist, size_t indent )
+otb::SparseAdjList otb::SparseGraph::getNeighborGraph(ompl::base::State *state, double dist, size_t indent )
 {
-
-  SparseVertex v = addVertex(state,VertexType::UNKNOWN ,1);
+  SparseAdjList tmp_g;
+  const SparseVertex v = addVertex(state,VertexType::UNKNOWN ,1);
   std::set<SparseEdge> unique_edges;
   std::vector<SparseVertex> graphNeighbors;
   size_t notExistVertexes = 0;
  // TODO check if it is not better to create temporary graph
-
   if(findGraphNeighbors(v, graphNeighbors, dist, indent))
   {
+    BOLT_WARN(1, true, " Co znowu nie tak?");
+
     auto start = std::chrono::high_resolution_clock::now();
+    BOLT_WARN(1, true, " Co znowu nie tak?1");
+
     for (auto iter = graphNeighbors.begin(); iter != graphNeighbors.end(); iter++)
     {
+      BOLT_WARN(1, true, " Co znowu nie tak2?");
+
       SparseEdgeInIt in, in_end;
       SparseEdgeOutIt out, out_end;
       for (boost::tie(out, out_end) = boost::out_edges(*iter, g_); out != out_end; out++)
       {
+        BOLT_WARN(1, true, " Co znowu nie tak3?");
+
         SparseVertex source = boost::source ( *out, g_ ); // equal to g_[*iter].state_
         SparseVertex target = boost::target ( *out, g_ );
         // TODO Why edge has target vertex which does not exist ? hopefully it will not slow down as much.
-        if(!boost::in_vertex_set(g_, target))
+        if(source == 0 || !boost::in_vertex_set(g_, target)) //hardcoded
         {
           notExistVertexes++;
           continue;
         }
-        if (si_->distance(g_[target].state_, state) > dist)
+        BOLT_WARN(1, true, " Co znowu nie tak4?");
+        std::cout <<"( " <<source<< " , " << target <<" )"<<std::endl;
+
+        if (distanceFunction(target, v) > dist)
         {
           SparseVertex v_intermediate = getIntermediateVertex(source, target, dist , indent);
           if(unique_edges.insert(addEdge(source, v_intermediate,EdgeType::eINTERMEDIATE,indent)).second)
+          {
+            addVertexEdgeToGraph(source, v_intermediate, tmp_g);
             intermediateVertices_.push_back(v_intermediate);
+          }
         }else
-          unique_edges.insert(*out);
+        {
+          if (unique_edges.insert(*out).second)
+            addVertexEdgeToGraph(source, target, tmp_g);
+        }
       }
+      BOLT_WARN(1, true, " Co znowu nie tak5?");
+
       for (boost::tie(in, in_end) = boost::in_edges(*iter, g_); in != in_end; in++)
       {
         SparseVertex source = boost::source ( *in, g_ );
         SparseVertex target = boost::target ( *in, g_ ); // equal to g_[*iter].state_
+        BOLT_WARN(1, true, " Co znowu nie tak6?");
 
         // TODO Why edge has target vertex which does not exist ? hopefully it will not slow down as much.
-        if(!boost::in_vertex_set(g_, source))
+        if(source == 0 || !boost::in_vertex_set(g_, source)) // Hardcoded
         {
           notExistVertexes++;
           continue;
         }
-        if ( si_->distance(g_[source].state_, state) > dist)
+        BOLT_WARN(1, true, " Co znowu nie tak7?");
+
+        std::cout <<"( " <<source<< " , " << target <<" )"<<std::endl;
+
+        if ( distanceFunction(source, v) > dist)
         {
+          BOLT_WARN(1, true, " Co znowu nie tak75?");
+
           SparseVertex v_intermediate = getIntermediateVertex(target, source, dist , indent);
+          BOLT_WARN(1, true, " Co znowu nie tak76?");
           if(unique_edges.insert(addEdge(target, v_intermediate,EdgeType::eINTERMEDIATE,indent)).second)
+          {
+            addVertexEdgeToGraph(target, v_intermediate, tmp_g);
             intermediateVertices_.push_back(v_intermediate);
+          }
+          BOLT_WARN(1, true, " Co znowu nie tak77?");
         }else
-          unique_edges.insert(*in);
+        {
+          if (unique_edges.insert(*in).second)
+            addVertexEdgeToGraph(source, target, tmp_g);
+        }
       }
+      BOLT_WARN(1, true, " Co znowu nie tak8?");
+
     }
     auto diff = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now() - start);
 
@@ -1641,8 +1676,9 @@ std::vector<otb::SparseEdge> otb::SparseGraph::getNeighborsEdges(ompl::base::Sta
 
 
   removeVertex(v, indent); // Can remove because there are no edges created for this vertex
-  return  !unique_edges.empty() ? std::vector<SparseEdge>(unique_edges.begin(), unique_edges.end()) :
-          std::vector<SparseEdge>();
+//  return  !unique_edges.empty() ? std::vector<SparseEdge>(unique_edges.begin(), unique_edges.end()) :
+//          std::vector<SparseEdge>();
+  return tmp_g;
 }
 
 otb::SparseVertex otb::SparseGraph::getIntermediateVertex(otb::SparseVertex v1, otb::SparseVertex v2, double dist,
@@ -1666,3 +1702,18 @@ otb::SparseVertex otb::SparseGraph::getIntermediateVertex(otb::SparseVertex v1, 
   return  SparseVertex(addVertex(intermediate_state, VertexType::INTERMEDIATE, indent));
 }
 
+bool otb::SparseGraph::addVertexEdgeToGraph(otb::SparseVertex source,otb::SparseVertex target, otb::SparseAdjList &graph)
+{
+  SparseVertex v1 = boost::add_vertex(graph);
+  SparseVertex v2 = boost::add_vertex(graph);
+  graph[v1].state_ =  si_->allocState();
+  graph[v2].state_ =  si_->allocState();
+  si_->copyState(graph[v1].state_,g_[source].state_);
+  si_->copyState(graph[v2].state_,g_[target].state_);
+
+  BOLT_WARN(1,true,"Adress" << graph[v1].state_ << " add " <<g_[source].state_);
+
+  SparseEdge e = (boost::add_edge(v1, v2,graph)).first;
+  graph[e].weight_ = si_->distance(graph[v1].state_, graph[v2].state_);
+  return true;
+}

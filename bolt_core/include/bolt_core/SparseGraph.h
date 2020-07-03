@@ -154,9 +154,12 @@ public:
   bool findGraphNeighbors(SparseVertex  vertex,  std::vector<SparseVertex> &graphNeighbors,
                                             double dist, std::size_t indent);
 
-  std::vector<SparseEdge> getNeighborsEdges(ompl::base::State *state, double dist, size_t indent = 1);
+//  std::vector<SparseEdge> getNeighborsEdges(ompl::base::State *state, double dist, size_t indent = 1);
+  SparseAdjList getNeighborGraph(ompl::base::State *state, double dist, size_t indent = 1);
+  bool addVertexEdgeToGraph(SparseVertex source,SparseVertex target, SparseAdjList &graph);
 
-  SparseVertex getIntermediateVertex(SparseVertex v1, SparseVertex v2, double dist, size_t indent);
+
+    SparseVertex getIntermediateVertex(SparseVertex v1, SparseVertex v2, double dist, size_t indent);
 
 
     /** \brief Reset the whole class */
