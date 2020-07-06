@@ -155,12 +155,14 @@ public:
                                             double dist, std::size_t indent);
 
 //  std::vector<SparseEdge> getNeighborsEdges(ompl::base::State *state, double dist, size_t indent = 1);
-  SparseAdjList getNeighborGraph(ompl::base::State *state, double dist, size_t indent = 1);
-  bool addVertexEdgeToGraph(SparseVertex source,SparseVertex target, SparseAdjList &graph);
+ bool getNeighborGraph(ompl::base::State *state, double dist,SparseAdjList & graph, size_t indent = 1);
+  bool addEdgeToGraph(SparseVertex source,SparseVertex target, SparseAdjList &graph);
 
 
-    SparseVertex getIntermediateVertex(SparseVertex v1, SparseVertex v2, double dist, size_t indent);
+  SparseVertex addIntermediateToGraph(SparseVertex v1, SparseVertex v2, double dist,
+                                              size_t indent, SparseAdjList &graph);
 
+  SparseVertex copyVertexToGraph(SparseVertex source, SparseAdjList &graph);
 
     /** \brief Reset the whole class */
   void clear();

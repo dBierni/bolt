@@ -1578,14 +1578,16 @@ bool otb::SparseGraph::findGraphNeighbors(SparseVertex  vertex,  std::vector<Spa
   return graphNeighbors.empty() ? false : true;
 }
 
-otb::SparseAdjList otb::SparseGraph::getNeighborGraph(ompl::base::State *state, double dist, size_t indent )
+bool otb::SparseGraph::getNeighborGraph(ompl::base::State *state, double dist,SparseAdjList & graph ,size_t indent)
 {
-  SparseAdjList tmp_g;
   const SparseVertex v = addVertex(state,VertexType::UNKNOWN ,1);
-  std::set<SparseEdge> unique_edges;
+  std::set<std::pair<SparseVertex, SparseVertex>> unique_edges;
   std::vector<SparseVertex> graphNeighbors;
   size_t notExistVertexes = 0;
- // TODO check if it is not better to create temporary graph
+  bool add_source, add_target ;
+  bool result = false;
+
+  // TODO check if it is not better to create temporary graph
   if(findGraphNeighbors(v, graphNeighbors, dist, indent))
   {
     auto start = std::chrono::high_resolution_clock::now();
@@ -1593,6 +1595,12 @@ otb::SparseAdjList otb::SparseGraph::getNeighborGraph(ompl::base::State *state, 
     {
       SparseEdgeInIt in, in_end;
       SparseEdgeOutIt out, out_end;
+      add_source = true;
+      add_target = true;
+      SparseVertex v1_out_graph = boost::add_vertex(graph);
+      graph[v1_out_graph].state_ = si_->allocState();
+      SparseVertex v1_in_graph = boost::add_vertex(graph);
+      graph[v1_in_graph].state_ = si_->allocState();
       for (boost::tie(out, out_end) = boost::out_edges(*iter, g_); out != out_end; out++)
       {
 
@@ -1604,20 +1612,28 @@ otb::SparseAdjList otb::SparseGraph::getNeighborGraph(ompl::base::State *state, 
           notExistVertexes++;
           continue;
         }
-//        std::cout <<"( " <<source<< " , " << target <<" )"<<std::endl;
+        if (add_source)
+        {
+          si_->copyState(graph[v1_out_graph].state_, g_[source].state_);
+          add_source = false;
+        }
+        std::cout <<"( " <<source<< " , " << target <<" )"<<std::endl;
 
         if (distanceFunction(target, v) > dist)
         {
-          SparseVertex v_intermediate = getIntermediateVertex(source, target, dist , indent);
-          if(unique_edges.insert(addEdge(source, v_intermediate,EdgeType::eINTERMEDIATE,indent)).second)
-          {
-            addVertexEdgeToGraph(source, v_intermediate, tmp_g);
-            intermediateVertices_.push_back(v_intermediate);
-          }
+       //   if ((unique_edges.insert(std::make_pair(source, target)).second))
+        //  {
+            SparseVertex v_intermediate = addIntermediateToGraph(source, target, dist , indent, graph);
+            addEdgeToGraph(v1_out_graph, v_intermediate, graph);
+       //   }
+
         }else
         {
-          if (unique_edges.insert(*out).second)
-            addVertexEdgeToGraph(source, target, tmp_g);
+          if ((unique_edges.insert(std::make_pair(source, target)).second))
+          {
+            SparseVertex tmp_target = copyVertexToGraph(target, graph);
+            addEdgeToGraph(v1_out_graph, tmp_target, graph);
+          }
         }
       }
 
@@ -1632,20 +1648,28 @@ otb::SparseAdjList otb::SparseGraph::getNeighborGraph(ompl::base::State *state, 
           notExistVertexes++;
           continue;
         }
-//        std::cout <<"( " <<source<< " , " << target <<" )"<<std::endl;
+        if (add_target)
+        {
+          si_->copyState(graph[v1_in_graph].state_, g_[source].state_);
+          add_target = false;
+        }
+        std::cout <<"( " <<source<< " , " << target <<" )"<<std::endl;
 
         if ( distanceFunction(source, v) > dist)
         {
-          SparseVertex v_intermediate = getIntermediateVertex(target, source, dist , indent);
-          if(unique_edges.insert(addEdge(target, v_intermediate,EdgeType::eINTERMEDIATE,indent)).second)
-          {
-            addVertexEdgeToGraph(target, v_intermediate, tmp_g);
-            intermediateVertices_.push_back(v_intermediate);
-          }
+          //if ((unique_edges.insert(std::make_pair(source, target)).second))
+          //{
+            SparseVertex v_intermediate = addIntermediateToGraph(target, source, dist , indent, graph);
+            addEdgeToGraph(v_intermediate, v1_in_graph, graph);
+        //  }
+//            intermediateVertices_.push_back(v_intermediate);
         }else
         {
-          if (unique_edges.insert(*in).second)
-            addVertexEdgeToGraph(source, target, tmp_g);
+          if ((unique_edges.insert(std::make_pair(source, target)).second))
+          {
+            SparseVertex tmp_source = copyVertexToGraph(source, graph);
+            addEdgeToGraph( tmp_source,v1_in_graph, graph);
+          }
         }
       }
 
@@ -1654,18 +1678,22 @@ otb::SparseAdjList otb::SparseGraph::getNeighborGraph(ompl::base::State *state, 
 
     BOLT_WARN(indent,true, "Neighbors edges founded in "<< diff.count() << " ms");
     BOLT_WARN(indent,true, "Number of  Vertex ("<< notExistVertexes << ") which do not exist in graph");
-
+    result = true;
   }
 
+//for(auto it = unique_edges.begin(); it != unique_edges.end(); it++){
+//  BOLT_WARN(indent,true, "unique edges  "<< it->first << "} {" << it->second);
+//
+//}
 
   removeVertex(v, indent); // Can remove because there are no edges created for this vertex
 //  return  !unique_edges.empty() ? std::vector<SparseEdge>(unique_edges.begin(), unique_edges.end()) :
 //          std::vector<SparseEdge>();
-  return tmp_g;
+  return result;
 }
 
-otb::SparseVertex otb::SparseGraph::getIntermediateVertex(otb::SparseVertex v1, otb::SparseVertex v2, double dist,
-        size_t indent)
+otb::SparseVertex otb::SparseGraph::addIntermediateToGraph(otb::SparseVertex v1, otb::SparseVertex v2, double dist,
+        size_t indent, otb::SparseAdjList &graph)
 {
   const unsigned int count = si_->getStateSpace()->validSegmentCount(g_[v1].state_, g_[v2].state_);
   ompl::base::State *intermediate_state = si_->allocState();
@@ -1682,21 +1710,29 @@ otb::SparseVertex otb::SparseGraph::getIntermediateVertex(otb::SparseVertex v1, 
     }else
       break;
   }
-  return  SparseVertex(addVertex(intermediate_state, VertexType::INTERMEDIATE, indent));
+  SparseVertex v_graph = boost::add_vertex(graph);
+  graph[v_graph].state_ =  si_->allocState();
+  si_->copyState(graph[v_graph].state_, intermediate_state);
+  si_->freeState(intermediate_state);
+
+  return  v_graph;
 }
 
-bool otb::SparseGraph::addVertexEdgeToGraph(otb::SparseVertex source,otb::SparseVertex target, otb::SparseAdjList &graph)
+bool otb::SparseGraph::addEdgeToGraph(otb::SparseVertex source,otb::SparseVertex target, otb::SparseAdjList &graph)
 {
-  SparseVertex v1 = boost::add_vertex(graph);
-  SparseVertex v2 = boost::add_vertex(graph);
-  graph[v1].state_ =  si_->allocState();
-  graph[v2].state_ =  si_->allocState();
-  si_->copyState(graph[v1].state_,g_[source].state_);
-  si_->copyState(graph[v2].state_,g_[target].state_);
+//  BOLT_WARN(1, true, "addEdgeToGraph");
+//    BOLT_WARN(1, true,"STATE graph nowy " << graph[v2].state_ <<" source :  "<< graph[source].state_);
+    SparseEdge e = (boost::add_edge(source, target,graph)).first;
+    graph[e].weight_ = si_->distance(graph[source].state_, graph[target].state_);
 
-//  BOLT_WARN(1,true,"Adress" << graph[v1].state_ << " add " <<g_[source].state_);
 
-  SparseEdge e = (boost::add_edge(v1, v2,graph)).first;
-  graph[e].weight_ = si_->distance(graph[v1].state_, graph[v2].state_);
   return true;
+}
+otb::SparseVertex otb::SparseGraph::copyVertexToGraph(otb::SparseVertex source, otb::SparseAdjList &graph)
+{
+  SparseVertex vertex = boost::add_vertex(graph);
+  graph[vertex].state_ = si_->allocState();
+  si_->copyState(graph[vertex].state_, g_[source].state_);
+
+  return vertex;
 }
