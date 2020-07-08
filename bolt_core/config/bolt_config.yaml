@@ -1,4 +1,3 @@
-
 # ====================================================
 sparse_mirror:
   verbose:
@@ -141,18 +140,23 @@ bolt:
     robot_trajectory: true
 
   graphs_switch:
-    graphs_quantity: 1
+    graphs_quantity: 2
     graps_folder: /bolt_storage/
 
 #-------# should be in another yaml.
   graph_0:
-    name: "bolt_arm_UR_database"
+    name: "bolt_arm_UR_husky"
     pose:
       x: 0
       y: 0
-      z: 0
+      z: 0.35
 
-
+  graph_1:
+    name: "bolt_arm_UR_husky"
+    pose:
+      x: 1.0
+      y: 0
+      z: 0.35
 
 # ====================================================
 cart_path_planner:
@@ -203,9 +207,3 @@ moveit_base:
     robot_state_topic: /baxter/robot_state
     trajectory_topic: /baxter/display_trajectory
 
-maps_switch:
-  maps_amount: 1
-  maps_folder: /bolt_storage/
-  map_1: "bolt_arm_UR_database.yaml"
-  map_2: "bolt_arm_UR_database_1.yaml"
-  map_3: "bolt_arm_UR_database_2.yaml"

@@ -309,6 +309,7 @@ void SparseGenerator::addDiscretizedStates(std::size_t indent)
 bool SparseGenerator::addRandomSamplesOneThread(std::size_t indent)
 {
   BOLT_FUNC(indent, verbose_, "addRandomSamplesOneThread()");
+  BOLT_FUNC(indent, true, "addRandomSamplesOneThread()");
 
   // Clear stats
   numRandSamplesAdded_ = 0;

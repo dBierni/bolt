@@ -1595,8 +1595,7 @@ bool otb::SparseGraph::getNeighborGraph(ompl::base::State *state, double dist,Sp
     {
       SparseEdgeInIt in, in_end;
       SparseEdgeOutIt out, out_end;
-      add_source = true;
-      add_target = true;
+      add_source = true; add_target = true;
       SparseVertex v1_out_graph = boost::add_vertex(graph);
       graph[v1_out_graph].state_ = si_->allocState();
       SparseVertex v1_in_graph = boost::add_vertex(graph);
@@ -1607,25 +1606,25 @@ bool otb::SparseGraph::getNeighborGraph(ompl::base::State *state, double dist,Sp
         SparseVertex source = boost::source ( *out, g_ ); // equal to g_[*iter].state_
         SparseVertex target = boost::target ( *out, g_ );
         // TODO Why edge has target vertex which does not exist ? hopefully it will not slow down as much.
-        if(source == 0 || !boost::in_vertex_set(g_, target)) //hardcoded
-        {
-          notExistVertexes++;
-          continue;
-        }
+//        if(source == 0 || !boost::in_vertex_set(g_, target)) //hardcoded
+//        {
+//          notExistVertexes++;
+//          continue;
+//        }
         if (add_source)
         {
           si_->copyState(graph[v1_out_graph].state_, g_[source].state_);
           add_source = false;
         }
-        std::cout <<"( " <<source<< " , " << target <<" )"<<std::endl;
+//        std::cout <<"( " <<source<< " , " << target <<" )"<<std::endl;
 
         if (distanceFunction(target, v) > dist)
         {
-       //   if ((unique_edges.insert(std::make_pair(source, target)).second))
-        //  {
+          if ((unique_edges.insert(std::make_pair(source, target)).second))
+          {
             SparseVertex v_intermediate = addIntermediateToGraph(source, target, dist , indent, graph);
             addEdgeToGraph(v1_out_graph, v_intermediate, graph);
-       //   }
+          }
 
         }else
         {
@@ -1643,25 +1642,25 @@ bool otb::SparseGraph::getNeighborGraph(ompl::base::State *state, double dist,Sp
         SparseVertex target = boost::target ( *in, g_ ); // equal to g_[*iter].state_
 
         // TODO Why edge has target vertex which does not exist ? hopefully it will not slow down as much.
-        if(source == 0 || !boost::in_vertex_set(g_, source)) // Hardcoded
-        {
-          notExistVertexes++;
-          continue;
-        }
+//        if(source == 0 || !boost::in_vertex_set(g_, source)) // Hardcoded
+//        {
+//          notExistVertexes++;
+//          continue;
+//        }
         if (add_target)
         {
           si_->copyState(graph[v1_in_graph].state_, g_[source].state_);
           add_target = false;
         }
-        std::cout <<"( " <<source<< " , " << target <<" )"<<std::endl;
+//        std::cout <<"( " <<source<< " , " << target <<" )"<<std::endl;
 
         if ( distanceFunction(source, v) > dist)
         {
-          //if ((unique_edges.insert(std::make_pair(source, target)).second))
-          //{
+          if ((unique_edges.insert(std::make_pair(source, target)).second))
+          {
             SparseVertex v_intermediate = addIntermediateToGraph(target, source, dist , indent, graph);
             addEdgeToGraph(v_intermediate, v1_in_graph, graph);
-        //  }
+          }
 //            intermediateVertices_.push_back(v_intermediate);
         }else
         {
